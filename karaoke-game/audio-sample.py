@@ -2,6 +2,8 @@ import pyaudio
 import numpy as np
 import librosa
 from matplotlib import pyplot as plt
+import scipy
+import math
 
 # Set up audio stream
 # reduce chunk size and sampling rate for lower latency
@@ -57,12 +59,15 @@ while True:
     data = np.frombuffer(data, dtype=np.int16)
     line.set_ydata(data)
 
-    most_frequ = extract_peak_frequency(data, RATE)
+    most_frequ = extract_major_frequency(data, RATE)
 
     #print(int(most_frequ))
     #print(librosa.hz_to_note(most_frequ))
-    if int(most_frequ) != 0:
+    if int(most_frequ) >50 and librosa.hz_to_note(most_frequ) != 'F1' and librosa.hz_to_note(most_frequ) != 'C6':
         print(librosa.hz_to_note(most_frequ))
+        #1print(most_frequ)
+    
+    
 
     # Redraw plot
     fig.canvas.draw()
