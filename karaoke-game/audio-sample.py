@@ -1,5 +1,6 @@
 import pyaudio
 import numpy as np
+import librosa
 from matplotlib import pyplot as plt
 
 # Set up audio stream
@@ -39,6 +40,14 @@ ax.set_ylim(-30000, 30000)
 plt.ion()
 plt.show()
 
+def extract_major_frequency(data, sampling_rate):
+    fft = np.fft.fft(data)
+    fft_freqs = np.fft.fftfreq(len(data))
+    major_freq_coefficient = np.argmax(np.abs(fft))
+    major_freq = fft_freqs[major_freq_coefficient]
+    
+    return abs(major_freq * sampling_rate)
+
 # continuously capture and plot audio singal
 while True:
     # Read audio data from stream
@@ -48,6 +57,17 @@ while True:
     data = np.frombuffer(data, dtype=np.int16)
     line.set_ydata(data)
 
+    most_frequ = extract_peak_frequency(data, RATE)
+
+    #print(int(most_frequ))
+    #print(librosa.hz_to_note(most_frequ))
+    if int(most_frequ) != 0:
+        print(librosa.hz_to_note(most_frequ))
+
     # Redraw plot
     fig.canvas.draw()
     fig.canvas.flush_events()
+
+
+# https://librosa.org/doc/main/generated/librosa.hz_to_note.html
+# https://dsp.stackexchange.com/questions/78355/how-to-extract-the-dominant-frequency-from-the-audio-wav-file-using-numpy
