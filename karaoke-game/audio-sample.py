@@ -63,7 +63,7 @@ while True:
 
     #print(int(most_frequ))
     #print(librosa.hz_to_note(most_frequ))
-    if int(most_frequ) >50 and librosa.hz_to_note(most_frequ) != 'F1' and librosa.hz_to_note(most_frequ) != 'C6':
+    if int(most_frequ) >1300 and librosa.hz_to_note(most_frequ) != 'F1' and librosa.hz_to_note(most_frequ) != 'C6':
         print(librosa.hz_to_note(most_frequ))
         #1print(most_frequ)
     
@@ -76,3 +76,4 @@ while True:
 
 # https://librosa.org/doc/main/generated/librosa.hz_to_note.html
 # https://dsp.stackexchange.com/questions/78355/how-to-extract-the-dominant-frequency-from-the-audio-wav-file-using-numpy
+#https://www.youtube.com/watch?v=WQvjXZfcddQ
