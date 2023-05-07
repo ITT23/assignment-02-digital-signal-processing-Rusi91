@@ -6,6 +6,7 @@ import pyglet
 from pyglet import app, image, clock
 from pyglet.window import Window
 from vocal_range_enum import Vocal_Range
+from sound_manager import Sound_Manager
 
 # Set up audio stream
 # reduce chunk size and sampling rate for lower latency
