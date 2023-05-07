@@ -59,10 +59,8 @@ note_input = ""
 
 vocal_range_test = Vocal_Range(Vocal_Range.DESCRIPTION)
 
-highest_achieved_note = ""
-lowest_achieved_note = ""
-
-
+highest_achieved_note = "not tested"
+lowest_achieved_note = "not tested"
 
 # create game window
 window = Window(WINDOW_WIDTH, WINDOW_HEIGHT)
@@ -208,39 +206,23 @@ def draw_next_test_screen():
 
 def draw_result_screen():
     global lowest_achieved_note, highest_achieved_note
-    result_overall = pyglet.text.Label("RESULTS OF THE VOCAL TESTER",
+    result_overall = pyglet.text.Label("YOUR VOCAL RANGE",
                           font_name='Times New Roman',
-                          font_size=40,
-                          x = WINDOW_WIDTH/2, y = WINDOW_HEIGHT / 1.5,
+                          font_size=30,
+                          x = WINDOW_WIDTH/2, y = WINDOW_HEIGHT * 0.9,
                           anchor_x = 'center', anchor_y = 'center')
     
-    lowest_note_desc_label = pyglet.text.Label("LOWEST ACHIEVED NOTE:",
+    result_lowest_note = pyglet.text.Label("Your lowest achieved note is " + lowest_achieved_note,
                           font_name='Times New Roman',
-                          font_size=30,
-                          x = WINDOW_WIDTH / 4,
-                          y = WINDOW_HEIGHT / 2 + WINDOW_HEIGHT / 5,
-                          anchor_x='center', anchor_y='center')
-
-    lowest_note_label = pyglet.text.Label(lowest_achieved_note,
-                          font_name='Times New Roman',
-                          font_size=60,
-                          x = WINDOW_WIDTH / 4,
-                          y = WINDOW_HEIGHT / 2,
-                          anchor_x='center', anchor_y='center')
+                          font_size=20,
+                          x = WINDOW_WIDTH/2, y = WINDOW_HEIGHT * 0.7,
+                          anchor_x = 'center', anchor_y = 'center')
     
-    highest_note_desc_label = pyglet.text.Label("HIGHEST ACHIEVED NOTE:",
+    result_highest_note = pyglet.text.Label("Your highest achieved note is " + highest_achieved_note,
                           font_name='Times New Roman',
-                          font_size=30,
-                          x = WINDOW_WIDTH / 2 + WINDOW_WIDTH / 4,
-                          y = WINDOW_HEIGHT / 2 + WINDOW_HEIGHT / 5,
-                          anchor_x='center', anchor_y='center')
-    
-    highest_note_label = pyglet.text.Label(highest_achieved_note,
-                          font_name='Times New Roman',
-                          font_size=60,
-                          x = WINDOW_WIDTH / 2 + WINDOW_WIDTH / 4,
-                          y = WINDOW_HEIGHT / 2,
-                          anchor_x='center', anchor_y='center')
+                          font_size=20,
+                          x = WINDOW_WIDTH/2, y = WINDOW_HEIGHT * 0.5,
+                          anchor_x = 'center', anchor_y = 'center')
     
     restart_label = pyglet.text.Label("Press -spacebar- to restart the test.",
                           font_name='Times New Roman',
@@ -249,19 +231,16 @@ def draw_result_screen():
                           y = WINDOW_HEIGHT * 0.1,
                           anchor_x='center', anchor_y='center')
     
-    lowest_achieved_note = ""
-    highest_achieved_note = ""
+    
 
     result_overall.draw()
-    lowest_note_desc_label.draw()
-    lowest_note_label.draw()
-    highest_note_desc_label.draw()
-    highest_note_label.draw()
+    result_lowest_note.draw()
+    result_highest_note.draw()
     restart_label.draw()
     
 @window.event
 def on_key_press(symbol, modifiers):
-    global vocal_range_test, notes_index
+    global vocal_range_test, notes_index, lowest_achieved_note, highest_achieved_note
     if symbol == pyglet.window.key.SPACE:
         if vocal_range_test == Vocal_Range.DESCRIPTION:
             vocal_range_test = Vocal_Range.LOW_TEST
@@ -269,6 +248,8 @@ def on_key_press(symbol, modifiers):
             vocal_range_test = Vocal_Range.HIGH_TEST
         elif vocal_range_test == Vocal_Range.HIGH_TESTED:
             vocal_range_test = Vocal_Range.DESCRIPTION
+            lowest_achieved_note = "not tested"
+            highest_achieved_note = "not tested"
         elif vocal_range_test == Vocal_Range.LOW_TEST and notes_index < len(low_notes):
             notes_index += 1
             if notes_index + 1 >= len(low_notes):
