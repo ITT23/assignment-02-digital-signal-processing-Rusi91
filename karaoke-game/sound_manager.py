@@ -11,6 +11,12 @@ class Sound_Manager():
 
     def get_notes_index(self):
         return self.notes_index
+    
+    def get_low_notes_arr(self):
+        return self.low_notes
+    
+    def get_high_notes_arr(self):
+        return self.high_notes
 
     def set_notes_index(self, new_index):
         self.notes_index = new_index

@@ -7,6 +7,7 @@ from pyglet import app, image, clock
 from pyglet.window import Window
 from vocal_range_enum import Vocal_Range
 from sound_manager import Sound_Manager
+from os import path
 
 # Set up audio stream
 # reduce chunk size and sampling rate for lower latency
@@ -56,22 +57,28 @@ high_notes = ["C4", "C#4", "D4", "D#4", "E4", "F4", "F#4", "G4", "G#4", "A4", "A
               "B5", "C6", "C#6", "D6", "D#6", "E6", "F6", "F#6", "G6", "G#6", "A6", "A#6", "B6", "C7"]
 notes_index = 0
 
-note_input = ""
-
-vocal_range_test = Vocal_Range(Vocal_Range.DESCRIPTION)
+note_input_empty = ""
 
 highest_achieved_note = "not tested"
 lowest_achieved_note = "not tested"
 
+vocal_range_test = Vocal_Range(Vocal_Range.DESCRIPTION)
+sound_manager = Sound_Manager(low_notes, high_notes, notes_index, note_input_empty, lowest_achieved_note, highest_achieved_note)
+
 # create game window
 window = Window(WINDOW_WIDTH, WINDOW_HEIGHT)
 
+SUCCESS_SOUND_PATH = path.join(path.dirname(__file__), "music\success_sound.mp3")
+BACKGROUND_IMAGE_PATH = path.join(path.dirname(__file__), "pictures\\background.png")
 
 
 
 @window.event
 def on_draw():
+    
     window.clear()
+    
+    draw_background()
 
     if vocal_range_test == Vocal_Range.DESCRIPTION:
         draw_start_screen()
@@ -84,14 +91,17 @@ def on_draw():
     elif vocal_range_test == Vocal_Range.HIGH_TESTED:
         draw_result_screen()
 
+def draw_background():
+    background_image = image.load(BACKGROUND_IMAGE_PATH)
+    background_image.blit(0,0)
 
 def draw_tested_note():
     tested_note = ""
     if vocal_range_test == Vocal_Range.LOW_TEST:
-        tested_note = low_notes[notes_index]
+        tested_note = sound_manager.get_next_low_note()
         draw_test_title("VOCAL TEST FOR LOW RANGE")
     else:
-        tested_note = high_notes[notes_index]
+        tested_note = sound_manager.get_next_high_note()
         draw_test_title("VOCAL TEST FOR HIGH RANGE")
         
 
@@ -112,7 +122,6 @@ def draw_tested_note():
     tested_note_label.draw()
 
 def draw_input_note():
-    global note_input
 
     input_note_desc_label = pyglet.text.Label("INPUT",
                           font_name='Times New Roman',
@@ -121,7 +130,7 @@ def draw_input_note():
                           y = WINDOW_HEIGHT / 2 + WINDOW_HEIGHT / 5,
                           anchor_x='center', anchor_y='center')
     
-    input_note_label = pyglet.text.Label(note_input,
+    input_note_label = pyglet.text.Label(sound_manager.get_note_input(),
                           font_name='Times New Roman',
                           font_size=60,
                           x = WINDOW_WIDTH / 2 + WINDOW_WIDTH / 4,
@@ -153,7 +162,7 @@ def draw_scip_message():
     scip_message_label.draw()
 
 def handle_note_input(dt):
-    global note_input, notes_index, vocal_range_test, lowest_achieved_note, highest_achieved_note
+    global vocal_range_test
     # Read audio data from stream
     data = stream.read(CHUNK_SIZE)
 
@@ -163,19 +172,32 @@ def handle_note_input(dt):
     most_frequ = extract_major_frequency(data, RATE)
 
     if int(most_frequ) != 0 :
-        note_input = librosa.hz_to_note(most_frequ)
-        if vocal_range_test == vocal_range_test.LOW_TEST and note_input == low_notes[notes_index] and notes_index + 1 < len(low_notes):
-            notes_index += 1
-            lowest_achieved_note = note_input
-            if notes_index + 1 >= len(low_notes):
+
+        low_note_goal = sound_manager.get_next_low_note()
+        high_note_goal = sound_manager.get_next_high_note()
+        low_notes_arr = sound_manager.get_low_notes_arr()
+        high_notes_arr = sound_manager.get_high_notes_arr()
+        notes_arr_index = sound_manager.get_notes_index()
+        
+        sound_manager.set_note_input(librosa.hz_to_note(most_frequ))
+        note_input = sound_manager.get_note_input()
+
+        if vocal_range_test == vocal_range_test.LOW_TEST and note_input == low_note_goal and notes_arr_index + 1 < len(low_notes_arr):
+            play_success_sound()
+            sound_manager.set_notes_index(notes_arr_index + 1)
+            sound_manager.set_lowest_achieved_note(note_input)
+            if notes_index + 1 >= len(low_notes_arr):
                 vocal_range_test = vocal_range_test.LOW_TESTED
-                notes_index = 0
-        elif vocal_range_test == vocal_range_test.HIGH_TEST and note_input == high_notes[notes_index] and notes_index + 1 < len(high_notes):
-            notes_index += 1
-            highest_achieved_note = note_input
-            if notes_index + 1 >= len(high_notes):
+                sound_manager.set_notes_index(0)
+        elif vocal_range_test == vocal_range_test.HIGH_TEST and note_input == high_note_goal and notes_arr_index + 1 < len(high_notes_arr):
+            play_success_sound()
+            sound_manager.set_notes_index(notes_arr_index + 1)
+            sound_manager.set_highest_achieved_note(note_input)
+            if notes_arr_index + 1 >= len(high_notes_arr):
                 vocal_range_test = vocal_range_test.HIGH_TESTED
-                notes_index = 0
+                sound_manager.set_notes_index(0)
+
+        #print("Peak frequency is " + str(most_frequ) + " (" + note_input + ")")
 
 def draw_start_screen():
     description_overall = pyglet.text.Label("VOCAL RANGE TESTER",
@@ -206,20 +228,20 @@ def draw_next_test_screen():
     description_continue.draw()
 
 def draw_result_screen():
-    global lowest_achieved_note, highest_achieved_note
+    
     result_overall = pyglet.text.Label("YOUR VOCAL RANGE",
                           font_name='Times New Roman',
                           font_size=30,
                           x = WINDOW_WIDTH/2, y = WINDOW_HEIGHT * 0.9,
                           anchor_x = 'center', anchor_y = 'center')
     
-    result_lowest_note = pyglet.text.Label("Your lowest achieved note is " + lowest_achieved_note,
+    result_lowest_note = pyglet.text.Label("Your lowest achieved note is " + sound_manager.get_lowest_achieved_note(),
                           font_name='Times New Roman',
                           font_size=20,
                           x = WINDOW_WIDTH/2, y = WINDOW_HEIGHT * 0.7,
                           anchor_x = 'center', anchor_y = 'center')
     
-    result_highest_note = pyglet.text.Label("Your highest achieved note is " + highest_achieved_note,
+    result_highest_note = pyglet.text.Label("Your highest achieved note is " + sound_manager.get_highest_achieved_note(),
                           font_name='Times New Roman',
                           font_size=20,
                           x = WINDOW_WIDTH/2, y = WINDOW_HEIGHT * 0.5,
@@ -241,7 +263,12 @@ def draw_result_screen():
     
 @window.event
 def on_key_press(symbol, modifiers):
-    global vocal_range_test, notes_index, lowest_achieved_note, highest_achieved_note
+    global vocal_range_test
+
+    low_notes_arr = sound_manager.get_low_notes_arr()
+    high_notes_arr = sound_manager.get_high_notes_arr()
+    notes_arr_index = sound_manager.get_notes_index()
+    
     if symbol == pyglet.window.key.SPACE:
         if vocal_range_test == Vocal_Range.DESCRIPTION:
             vocal_range_test = Vocal_Range.LOW_TEST
@@ -249,17 +276,17 @@ def on_key_press(symbol, modifiers):
             vocal_range_test = Vocal_Range.HIGH_TEST
         elif vocal_range_test == Vocal_Range.HIGH_TESTED:
             vocal_range_test = Vocal_Range.DESCRIPTION
-            lowest_achieved_note = "not tested"
-            highest_achieved_note = "not tested"
-        elif vocal_range_test == Vocal_Range.LOW_TEST and notes_index < len(low_notes):
-            notes_index += 1
-            if notes_index + 1 >= len(low_notes):
-                notes_index = 0
+            sound_manager.set_lowest_achieved_note("not tested")
+            sound_manager.set_highest_achieved_note("not tested")
+        elif vocal_range_test == Vocal_Range.LOW_TEST and notes_arr_index < len(low_notes_arr):
+            sound_manager.set_notes_index(notes_arr_index + 1)
+            if notes_arr_index + 1 >= len(low_notes_arr):
+                sound_manager.set_notes_index(0)
                 vocal_range_test = Vocal_Range.LOW_TESTED
-        elif vocal_range_test == Vocal_Range.HIGH_TEST and notes_index < len(high_notes):
-            notes_index += 1
-            if notes_index + 1 >= len(high_notes):
-                notes_index = 0
+        elif vocal_range_test == Vocal_Range.HIGH_TEST and notes_arr_index < len(high_notes_arr):
+            sound_manager.set_notes_index(notes_arr_index + 1)
+            if notes_arr_index + 1 >= len(high_notes_arr):
+                sound_manager.set_notes_index(0)
                 vocal_range_test = Vocal_Range.HIGH_TESTED
     elif symbol == pyglet.window.key.N:
         if vocal_range_test == Vocal_Range.LOW_TEST:
@@ -267,7 +294,17 @@ def on_key_press(symbol, modifiers):
         elif vocal_range_test == Vocal_Range.HIGH_TEST:
             vocal_range_test = Vocal_Range.HIGH_TESTED
 
+def play_success_sound():
+    success_sound = pyglet.media.load(SUCCESS_SOUND_PATH, streaming=False)
+    success_sound.play()
+
 clock.schedule_interval(handle_note_input, 0.1)
 
 # run game
 app.run()
+
+# https://librosa.org/doc/main/generated/librosa.hz_to_note.html
+# https://dsp.stackexchange.com/questions/78355/how-to-extract-the-dominant-frequency-from-the-audio-wav-file-using-numpy
+#https://www.youtube.com/watch?v=WQvjXZfcddQ
+#https://stackoverflow.com/questions/36476659/how-to-add-a-relative-path-in-python-to-find-image-and-other-file-with-a-short-p
+#https://unsplash.com/de/fotos/drir5tDCWF4

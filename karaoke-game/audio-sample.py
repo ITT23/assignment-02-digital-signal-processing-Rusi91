@@ -2,8 +2,7 @@ import pyaudio
 import numpy as np
 import librosa
 from matplotlib import pyplot as plt
-import scipy
-import math
+
 
 # Set up audio stream
 # reduce chunk size and sampling rate for lower latency
@@ -77,3 +76,5 @@ while True:
 # https://librosa.org/doc/main/generated/librosa.hz_to_note.html
 # https://dsp.stackexchange.com/questions/78355/how-to-extract-the-dominant-frequency-from-the-audio-wav-file-using-numpy
 #https://www.youtube.com/watch?v=WQvjXZfcddQ
+#https://stackoverflow.com/questions/36476659/how-to-add-a-relative-path-in-python-to-find-image-and-other-file-with-a-short-p
+#https://unsplash.com/de/fotos/drir5tDCWF4
