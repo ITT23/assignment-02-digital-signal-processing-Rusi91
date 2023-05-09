@@ -29,12 +29,13 @@ from pyglet.window import Window
 from vocal_range_enum import Vocal_Range
     # handels sound attributes
 from sound_manager import Sound_Manager
+from scipy.signal import butter, sosfilt
 
 # from audio-sample.py ------------------------------------------------------------------------------------------------------
 
 # Set up audio stream
 # reduce chunk size and sampling rate for lower latency
-CHUNK_SIZE = 1024  # Number of audio frames per buffer
+CHUNK_SIZE = 1024 * 4  # Number of audio frames per buffer
 FORMAT = pyaudio.paInt16  # Audio format
 CHANNELS = 1  # Mono audio
 RATE = 44100  # Audio sampling rate (Hz)
@@ -67,6 +68,9 @@ stream = p.open(format=FORMAT,
         # SOURCE 1: https://stackoverflow.com/questions/3694918/how-to-extract-frequency-associated-with-fft-values-in-python
         # SOURCE 2: https://dsp.stackexchange.com/questions/78355/how-to-extract-the-dominant-frequency-from-the-audio-wav-file-using-numpy
 def extract_major_frequency(data, sampling_rate):
+    print(len(data), sampling_rate)
+    highpass = butter(1, 1000, btype='hp', analog=False, output='sos', fs=sampling_rate)
+    data = sosfilt(highpass, data)
     fft = np.fft.fft(data)
     fft_freqs = np.fft.fftfreq(len(data))
     major_freq_coefficient = np.argmax(np.abs(fft))
@@ -105,10 +109,10 @@ WINDOW_HEIGHT = 600
 window = Window(WINDOW_WIDTH, WINDOW_HEIGHT)
 # path for the success sound (sound if user achieves to sing a musical note)
     # sound source: https://www.youtube.com/watch?v=_q8QmJadSEE -Piano Note C Sound Effect - @Sound Effects
-SUCCESS_SOUND_PATH = path.join(path.dirname(__file__), "music\success_sound.mp3")
+SUCCESS_SOUND_PATH = path.join(path.dirname(__file__), "music/success_sound.mp3")
 # path for the background image
     # image source: https://unsplash.com/de/fotos/drir5tDCWF4 @Andrey Konstantinov
-BACKGROUND_IMAGE_PATH = path.join(path.dirname(__file__), "pictures\\background.png")
+BACKGROUND_IMAGE_PATH = path.join(path.dirname(__file__), "pictures/background.png")
 
 @window.event
 def on_draw():
@@ -220,7 +224,11 @@ def handle_note_input(dt):
     # Convert audio data to numpy array 
     data = np.frombuffer(data, dtype=np.int16)
     # detects the sound’s major frequency
-    most_frequ = extract_major_frequency(data, RATE)
+
+    if np.max(data) > 10000:
+        most_frequ = extract_major_frequency(data, RATE)
+    else:
+        return
 
     if int(most_frequ) != 0 :
 
